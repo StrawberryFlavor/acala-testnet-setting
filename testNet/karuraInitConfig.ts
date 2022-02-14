@@ -23,7 +23,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
     let dave = new Keyring({type: 'sr25519'}).addFromMnemonic("//Dave")
     let eve = new Keyring({type: 'sr25519'}).addFromMnemonic("//Eve")
 
-    let oracler = [alice]
+    let oraclerSender = [alice, bob, charlie, dave, eve]
     let oraclerAddress = [alice.address, bob.address, charlie.address, dave.address, eve.address]
 
     // set Oracler
@@ -65,7 +65,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         let tx = suite.api.tx.acalaOracle.feedValues(
             symbolPrice
         )
-        for (const sender of oracler) {
+        for (const sender of oraclerSender) {
             await suite.send(sender, tx)
         }
 
