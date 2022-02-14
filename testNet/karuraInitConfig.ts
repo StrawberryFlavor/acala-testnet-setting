@@ -17,6 +17,63 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         new FixedPointNumber(365 * 24 * 60 * 60)
     );
 
+    let alice = new Keyring({type: 'sr25519'}).addFromMnemonic("//Alice")
+    let bob = new Keyring({type: 'sr25519'}).addFromMnemonic("//Bob")
+    let charlie = new Keyring({type: 'sr25519'}).addFromMnemonic("//Charlie")
+    let dave = new Keyring({type: 'sr25519'}).addFromMnemonic("//Dave")
+    let eve = new Keyring({type: 'sr25519'}).addFromMnemonic("//Eve")
+
+    let oracler = [alice]
+    let oraclerAddress = [alice.address, bob.address, charlie.address, dave.address, eve.address]
+
+    // set Oracler
+    function setOracler(suite: Suite) {
+        let tx = suite.api.tx.sudo.sudo(
+            suite.api.tx.operatorMembershipAcala.resetMembers(oraclerAddress)
+        )
+        suite.send(alice, tx)
+    }
+
+    // await setOracler(suite)
+
+    // set balance
+    function setOraclerBalance(suite: Suite, config = oraclerAddress) {
+        return suite.send(
+            suite.sudo,
+            suite.batchWrapper(config.map((config) => {
+                return suite.api.tx.currencies.updateBalance(
+                    config,
+                    {Token: "KAR"},
+                    new FixedPointNumber(10, 12).toChainData()
+                );
+            })).map(suite.sudoWarpper)
+        );
+    }
+
+    // await setOraclerBalance(suite)
+
+    let symbolPrice = [
+        [
+            {
+                Token: "KSM"
+            },
+            200 * 10 ** 18
+        ]
+    ]
+
+    async function setOraclePrice(suite: Suite) {
+        let tx = suite.api.tx.acalaOracle.feedValues(
+            symbolPrice
+        )
+        for (const sender of oracler) {
+            await suite.send(sender, tx)
+        }
+
+    }
+    // Oracle
+    await setOraclePrice(suite)
+
+
     const symbolPrecision = {
         "KAR": 12,
         "AUSD": 12,
@@ -27,7 +84,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
 
     const loanConfigs = [
         {
-            asset: 'KSM',
+            asset: {"Token": 'KSM'},
             requiredRatio: 2,
             stabilityFee,
             liquidationPenalty: 0.17,
@@ -35,7 +92,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
             maximunTotalDebitValue: 1 * 10 ** 8
         },
         // {
-        //     asset: 'LKSM',
+        //     asset: {"Token": 'LKSM'},
         //     requiredRatio: 2,
         //     stabilityFee,
         //     liquidationPenalty: 0.17,
@@ -51,7 +108,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         //     maximunTotalDebitValue: 1 * 10 ** 8
         // },
         // {
-        //     asset: 'DOT',
+        //     asset: {"Token": 'DOT'},
         //     requiredRatio: 2,
         //     stabilityFee,
         //     liquidationPenalty: 0.17,
@@ -59,7 +116,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         //     maximunTotalDebitValue: 1 * 10 ** 8
         // },
         // {
-        //     asset: 'LDOT',
+        //     asset: {"Token": 'LDOT'},
         //     requiredRatio: 2,
         //     stabilityFee,
         //     liquidationPenalty: 0.17,
@@ -67,7 +124,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         //     maximunTotalDebitValue: 1 * 10 ** 8
         // },
         // {
-        //     asset: 'KAR',
+        //     asset: {"Token": 'KAR'},
         //     requiredRatio: 2,
         //     stabilityFee,
         //     liquidationPenalty: 0.17,
@@ -220,6 +277,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
 
         }
     ]
+
     // enable TradingPair
     function enableTradingPair(suite: Suite, config = targetLiquidityPool) {
         return suite.send(
@@ -233,6 +291,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         );
 
     }
+
     // addLiquidity
     function addLiquidity(suite: Suite, config = targetLiquidityPool) {
         return suite.send(
@@ -310,8 +369,8 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
     // console.log('setupFaucetBalance success')
     //
     // setup loan collateral params
-    await setupLoans(suite)
-    console.log('setupLoans success')
+    // await setupLoans(suite)
+    // console.log('setupLoans success')
 
     // setup RENBTC price
     // await setupRENBTCPrice(suite)
