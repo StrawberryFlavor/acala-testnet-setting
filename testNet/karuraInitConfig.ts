@@ -27,14 +27,14 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
     let oraclerAddress = [alice.address, bob.address, charlie.address, dave.address, eve.address]
 
     // set Oracler
-    function setOracler(suite: Suite) {
+    async function setOracler(suite: Suite) {
         let tx = suite.api.tx.sudo.sudo(
             suite.api.tx.operatorMembershipAcala.resetMembers(oraclerAddress)
         )
-        suite.send(alice, tx)
+        await suite.send(alice, tx)
     }
 
-    // await setOracler(suite)
+    //await setOracler(suite)
 
     // set balance
     function setOraclerBalance(suite: Suite, config = oraclerAddress) {
@@ -50,14 +50,14 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         );
     }
 
-    // await setOraclerBalance(suite)
+    //await setOraclerBalance(suite)
 
     let symbolPrice = [
         [
             {
                 Token: "KSM"
             },
-            200 * 10 ** 18
+            new FixedPointNumber(200, 18).toChainData()
         ]
     ]
 
@@ -70,8 +70,9 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         }
 
     }
+
     // Oracle
-    await setOraclePrice(suite)
+    //await setOraclePrice(suite)
 
 
     const symbolPrecision = {
@@ -151,25 +152,40 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
     }
 
     // Setting the LoansIncentives
-    function setupLoansIncentives(suite: Suite) {
-        return suite.send(
-            suite.sudo,
-            suite.api.tx.incentives.updateIncentiveRewards(
-                ["LoansIncentive", {Token: "LKSM"}, new FixedPointNumber(1, 12).toChainData()]
-            )
+    async function setupLoansIncentives(suite: Suite) {
+        let tx = suite.api.tx.sudo.sudo(
+            suite.api.tx.incentives.updateIncentiveRewards([[
+                {
+                    Loans: {
+                        Token: "KSM"
+                    }
+                },
+                [
+                    [
+                        {
+                            Token: "KAR"
+                        },
+                        new FixedPointNumber(1, 12).toChainData()
+                    ]
+                ]
+            ]])
         )
+        await suite.send(alice, tx)
     }
+
+    // await setupLoansIncentives(suite)
+
 
     const dexIncentiveConfig = [
         {
             token1: 'KAR',
             token2: 'KSM',
-            amount: 1.5
+            amount: 1
         },
         {
             token1: 'KUSD',
             token2: 'KSM',
-            amount: 3
+            amount: 1
 
         }
     ]
@@ -180,20 +196,35 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
             suite.sudo,
             suite.batchWrapper(config.map((config) => {
                 return suite.api.tx.incentives.updateIncentiveRewards(
-                    [{"DexIncentive": {DEXShare: [{Token: config.token1}, {Token: config.token2}]}}, new FixedPointNumber(config.amount, 12).toChainData()]
+                    [[
+                        {
+                            Dex: {
+                                DexShare: [
+                                    {
+                                        Token: config.token1
+                                    },
+                                    {
+                                        Token: config.token2
+                                    }
+                                ]
+                            }
+                        },
+                        [
+                            [
+                                {
+                                    Token: "KAR"
+                                },
+                                new FixedPointNumber(config.amount, 12).toChainData()
+                            ]
+                        ]
+                    ]]
                 );
             })).map(suite.sudoWarpper)
         );
     }
 
-    function setupLoansIncentive(suite: Suite) {
-        return suite.send(
-            suite.sudo,
-            suite.api.tx.incentives.updateIncentiveRewards(
-                [{"LoansIncentive": {Token: "LKSM"}}, new FixedPointNumber(1, 12).toChainData()]
-            )
-        )
-    }
+    await setupDexIncentiveIncentives(suite, dexIncentiveConfig)
+
 
     // Setting the PayoutDeductionRatesLoans
     function setupPayoutDeductionRatesLoans(suite: Suite) {
@@ -368,9 +399,9 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
     // await setupFaucetBalance(suite);
     // console.log('setupFaucetBalance success')
     //
-    // setup loan collateral params
-    // await setupLoans(suite)
-    // console.log('setupLoans success')
+    //setup loan collateral params
+    //await setupLoans(suite)
+    //console.log('setupLoans success')
 
     // setup RENBTC price
     // await setupRENBTCPrice(suite)
@@ -400,7 +431,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
     // await addLiquidity(suite)
     // console.log('addLiquidity success')
     //
-    // console.log('complated')
-    //
-    // process.exit(0)
+    console.log('complated')
+
+    process.exit(0)
 })();
