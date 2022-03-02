@@ -78,7 +78,7 @@ const BN_LE_16_OPTS = {bitLength: 16, isLe: true};
 
     const test = getSiblingAccountInfo(2001, keyring);
 
-    console.log(keyring.encodeAddress(paraChainAccount, 2))
+    console.log('parachainAccount:' + keyring.encodeAddress(paraChainAccount, 2))
     console.log(createKeyDerived(paraChainAccount, 0));
 
     derivativeAccountId(paraChainAccount, 0, keyring);

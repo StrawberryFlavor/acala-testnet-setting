@@ -5,7 +5,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
 
 (async () => {
     const suite = new Suite();
-    const localWS = "wss://crosschain-dev.polkawallet.io:9907"
+    const localWS = "ws://8.218.107.141:9946"
     await suite.connect(localWS);
     const kar_sudo = "//Alice"
     await suite.importSudo('uri', kar_sudo);
@@ -41,7 +41,7 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
             suite.batchWrapper(config.map((config) => {
                 return suite.api.tx.currencies.updateBalance(
                     config,
-                    {Token: "KAR"},
+                    {Token: "ACA"},
                     new FixedPointNumber(10, 12).toChainData()
                 );
             })).map(suite.sudoWarpper)
@@ -52,9 +52,9 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
     let symbolPrice = [
         [
             {
-                Token: "KSM"
+                Token: "ACA"
             },
-            new FixedPointNumber(150, 18).toChainData()
+            new FixedPointNumber(1.2, 18).toChainData()
         ]
     ]
 
@@ -72,61 +72,21 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
     // Oracle
 
     const symbolPrecision = {
-        "KAR": 12,
-        "KUSD": 12,
-        "KSM": 12,
-        "LKSM": 12
+        "ACA": 12,
+        "DOT": 10,
+        "LDOT": 10,
+        "AUSD": 12,
     }
 
     const loanConfigs = [
-        // {
-        //     asset: {"Token": 'KSM'},
-        //     requiredRatio: 2,
-        //     stabilityFee,
-        //     liquidationPenalty: 0.17,
-        //     liquidationRatio: 1.85,
-        //     maximunTotalDebitValue: 1 * 10 ** 8
-        // },
         {
-            asset: {"Token": 'KSM'},
+            asset: {"Token": 'ACA'},
             requiredRatio: 2,
             stabilityFee,
             liquidationPenalty: 0.17,
             liquidationRatio: 1.85,
             maximunTotalDebitValue: 1 * 10 ** 8
         },
-        // {
-        //     asset: {"LiquidCrowdloan": 13},
-        //     requiredRatio: 2,
-        //     stabilityFee,
-        //     liquidationPenalty: 0.17,
-        //     liquidationRatio: 1.85,
-        //     maximunTotalDebitValue: 1 * 10 ** 8
-        // },
-        // {
-        //     asset: {"Token": 'DOT'},
-        //     requiredRatio: 2,
-        //     stabilityFee,
-        //     liquidationPenalty: 0.17,
-        //     liquidationRatio: 1.85,
-        //     maximunTotalDebitValue: 1 * 10 ** 8
-        // },
-        // {
-        //     asset: {"Token": 'LDOT'},
-        //     requiredRatio: 2,
-        //     stabilityFee,
-        //     liquidationPenalty: 0.17,
-        //     liquidationRatio: 1.85,
-        //     maximunTotalDebitValue: 1 * 10 ** 8
-        // },
-        // {
-        //     asset: {"Token": 'KAR'},
-        //     requiredRatio: 2,
-        //     stabilityFee,
-        //     liquidationPenalty: 0.17,
-        //     liquidationRatio: 1.85,
-        //     maximunTotalDebitValue: 1 * 10 ** 8
-        // },
     ]
 
     // Setting CDP Parameters
@@ -149,24 +109,14 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
 
     const balances = [
         {
-            currency: 'KAR',
+            currency: 'ACA',
             amount: 10 ** 5,
-            precision: symbolPrecision.KAR
+            precision: symbolPrecision.ACA
         },
         {
-            currency: 'KSM',
+            currency: 'DOT',
             amount: 10 ** 5,
-            precision: symbolPrecision.KSM
-        },
-        {
-            currency: 'LKSM',
-            amount: 10 ** 5,
-            precision: symbolPrecision.LKSM
-        },
-        {
-            currency: 'KUSD',
-            amount: 10 ** 5,
-            precision: symbolPrecision.KUSD
+            precision: symbolPrecision.DOT
         }
     ]
 
@@ -183,16 +133,16 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         );
     }
 
-    async function mintKUSDForKSM(suite: Suite) {
+    async function mintAUSDForACA(suite: Suite) {
         let tx = suite.api.tx.honzon.adjustLoan(
-            {Token: 'KSM'},
-            new FixedPointNumber(10, symbolPrecision.KSM).toChainData(),
-            new FixedPointNumber(50, 13).toChainData()
+            {Token: 'ACA'},
+            new FixedPointNumber(10000, symbolPrecision.ACA).toChainData(),
+            new FixedPointNumber(500, symbolPrecision.AUSD).toChainData()
         )
         await suite.send(faucet, tx)
     }
 
-    //await mintAUSDForKSM(suite)
+    //await mintAUSDForACA(suite)
 
     // Setting the LoansIncentives
     async function setupLoansIncentives(suite: Suite) {
@@ -200,18 +150,34 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
             suite.api.tx.incentives.updateIncentiveRewards([[
                 {
                     Loans: {
-                        Token: "KSM"
+                        Token: "ACA"
                     }
                 },
                 [
                     [
                         {
-                            Token: "KAR"
+                            Token: "ACA"
                         },
-                        new FixedPointNumber(1, 12).toChainData()
+                        new FixedPointNumber(11.188, 12).toChainData()
                     ]
                 ]
             ]])
+        )
+        await suite.send(alice, tx)
+    }
+
+    async function ClaimRewardDeductionRates(suite: Suite) {
+        let tx = suite.api.tx.sudo.sudo(
+            suite.api.tx.incentives.updateClaimRewardDeductionRates([
+                [
+                    {
+                        Loans: {
+                            Token: "ACA"
+                        }
+                    },
+                    new FixedPointNumber(0.5, 18).toChainData()
+                ]
+            ])
         )
         await suite.send(alice, tx)
     }
@@ -329,28 +295,13 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
 
     const targetLiquidityPool = [
         {
-            token1: 'KUSD',
-            token2: 'KSM',
-            amount1: 15000,
-            amount2: 100,
-            amount1Precision: symbolPrecision.KUSD,
-            amount2Precision: symbolPrecision.KSM
-        },
-        {
-            token1: 'KAR',
-            token2: 'KSM',
-            amount1: 10000,
-            amount2: 100,
-            amount1Precision: symbolPrecision.KAR,
-            amount2Precision: symbolPrecision.KSM
-        },
-        {
-            token1: 'KSM',
-            token2: 'LKSM',
-            amount1: 100,
+            token1: 'ACA',
+            token2: 'DOT',
+            amount1: 12500,
             amount2: 1000,
-            amount1Precision: symbolPrecision.KAR,
-            amount2Precision: symbolPrecision.KSM
+            amount1Precision: symbolPrecision.ACA,
+            amount2Precision: symbolPrecision.DOT,
+
         }
     ]
 
@@ -390,112 +341,39 @@ import {FixedPointNumber, Token} from '@acala-network/sdk-core';
         );
     }
 
-    let enableChargeFeePoolConfig = [
-        {
-            token: "KUSD",
-            poolSize: 500,
-            swapThreshold: 5
-        },
-        {
-            token: "KSM",
-            poolSize: 5,
-            swapThreshold: 5
-        },
-        {
-            token: "LKSM",
-            poolSize: 50,
-            swapThreshold: 5
-        },
-    ]
-
-
-    const treasuryAccountBalances = [
-        {
-            currency: 'KAR',
-            amount: 10 ** 5,
-            precision: symbolPrecision.KAR
-        },
-        {
-            currency: 'KSM',
-            amount: 1,
-            precision: symbolPrecision.KSM
-        },
-        {
-            currency: 'LKSM',
-            amount: 1,
-            precision: symbolPrecision.LKSM
-        },
-        {
-            currency: 'KUSD',
-            amount: 1,
-            precision: symbolPrecision.KUSD
-        }
-    ]
-
-    let treasuryAccount = await suite.api.consts.transactionPayment.treasuryAccount
-    console.log(treasuryAccount.toString())
-
-    function setupTreasuryAccountBalance(suite: Suite, config = treasuryAccountBalances) {
-        return suite.send(
-            suite.sudo,
-            suite.batchWrapper(config.map((config) => {
-                return suite.api.tx.currencies.updateBalance(
-                    treasuryAccount.toString(),
-                    {Token: config.currency},
-                    new FixedPointNumber(config.amount, config.precision).toChainData()
-                );
-            })).map(suite.sudoWarpper)
-        );
-    }
-
-    function enableChargeFeePool(suite: Suite, config = enableChargeFeePoolConfig) {
-        return suite.send(
-            suite.sudo,
-            suite.batchWrapper(config.map((config) => {
-                return suite.api.tx.transactionPayment.enableChargeFeePool(
-                    {Token: config.token},
-                    new FixedPointNumber(config.poolSize, 12).toChainData(),
-                    new FixedPointNumber(config.swapThreshold, 12).toChainData()
-                )
-            })).map(suite.sudoWarpper)
-        )
-    }
-
-
     // await setOracler(suite)
     // await setOraclerBalance(suite)
     // await setOraclePrice(suite)
 
-    // await setupLoansIncentives(suite)
+    await setupLoansIncentives(suite)
+    // await ClaimRewardDeductionRates(suite)
     // await setupDexIncentiveIncentives(suite, dexIncentiveConfig)
 
+
+    //setup faucet balance
+    await setupFaucetBalance(suite);
+    // console.log('setupFaucetBalance success')
     //
     //setup loan collateral params
     // await setupLoans(suite)
-    //console.log('setupLoans success')
+    // console.log('setupLoans success')
 
-    // mint aUSD for KSM
-    // await mintKUSDForKSM(suite)
-    // console.log('mintAUSDForKSM success')
+    // mint aUSD for ACA
+    // await mintAUSDForACA(suite)
+    // console.log('mintAUSDForACA success')
 
     // mint LKSM
     // await homaMintLKSM(suite)
     // console.log("homaMintLKSM success")
 
     // enableTradingPair
-    // await enableTradingPair(suite)
+    await enableTradingPair(suite)
     // console.log('enableTradingPair success')
-
-    //setup faucet balance
-    // await setupFaucetBalance(suite);
-    // console.log('setupFaucetBalance success')
-
+    //
     // // add liquidity
-    // await addLiquidity(suite)
+    await addLiquidity(suite)
     // console.log('addLiquidity success')
-
-    // await setupTreasuryAccountBalance(suite)
-    // await enableChargeFeePool(suite)
+    //
     console.log('complated')
 
     process.exit(0)
